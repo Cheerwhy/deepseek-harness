@@ -153,6 +153,7 @@ function drag(handle: Element, fromX: number, toX: number): void {
 
 beforeEach(() => {
   originalTitle = document.title
+  localStorage.clear()
   frameWidth = 1920
   selectedSession = 's-test' as SessionId
   selectedSessionTitle = undefined

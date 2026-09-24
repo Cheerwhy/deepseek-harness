@@ -2,9 +2,13 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { createLayoutStore } from '../src/client/stores.ts'
+import { layoutWidthPersistence } from '../src/client/persistence.ts'
 import type { MainPanelId } from '../src/client/service.ts'
 
-beforeEach(() => { vi.stubGlobal('innerWidth', 1920) })
+beforeEach(() => {
+  localStorage.clear()
+  vi.stubGlobal('innerWidth', 1920)
+})
 afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks() })
 
 describe('createLayoutStore', () => {
@@ -25,15 +29,13 @@ describe('createLayoutStore', () => {
     })
   })
 
-  it('creates independent instances without browser persistence', () => {
-    const write = vi.spyOn(Storage.prototype, 'setItem')
+  it('creates independent in-memory instances', () => {
     const a = createLayoutStore().create()
     const b = createLayoutStore().create()
     a.actions.setSidebar(400)
     a.actions.openRightbar(true, false)
     expect(b.store.getSnapshot().layoutInfo.sidebar).toBe(280)
     expect(b.store.getSnapshot().layoutInfo.rightbar).toBeNull()
-    expect(write).not.toHaveBeenCalled()
   })
 
   it('clamps the sidebar to 264–420px', () => {
@@ -288,5 +290,83 @@ describe('right panel instant geometry', () => {
     actions.closeRightbar()
     actions.openRightbar(true, fullscreen)
     expect(store.getSnapshot().layoutInfo).toMatchObject({ rightbarShown: true, rightbarFullscreen: fullscreen, rightbarInstant: false })
+  })
+})
+
+describe('width preference persistence', () => {
+  it('restores dragged widths on a later instance', () => {
+    const { actions } = createLayoutStore().create()
+    actions.setSidebar(400)
+    actions.openRightbar(true, false)
+    actions.setRightbar(600)
+    const { store } = createLayoutStore().create()
+    expect(store.getSnapshot().layoutInfo).toMatchObject({ sidebar: 400, rightbar: 600 })
+    expect(localStorage.getItem(layoutWidthPersistence)).toBe('{"sidebar":400,"rightbar":600}')
+  })
+
+  it('keeps a closed sidebar closed across instances', () => {
+    const { actions } = createLayoutStore().create()
+    actions.setSidebar(400)
+    actions.toggleSidebar()
+    const { store } = createLayoutStore().create()
+    expect(store.getSnapshot().layoutInfo.sidebar).toBe(0)
+  })
+
+  it('clamps a restored sidebar preference back into its contract range', () => {
+    localStorage.setItem(layoutWidthPersistence, '{"sidebar":9999,"rightbar":null}')
+    const { store } = createLayoutStore().create()
+    expect(store.getSnapshot().layoutInfo.sidebar).toBe(420)
+  })
+
+  it('keeps the first-opening default without a saved right preference', () => {
+    const { actions } = createLayoutStore().create()
+    actions.setSidebar(400)
+    expect(JSON.parse(localStorage.getItem(layoutWidthPersistence) ?? '')).toEqual({ sidebar: 400, rightbar: null })
+    const reloaded = createLayoutStore().create()
+    reloaded.actions.setViewportWidth(1000)
+    reloaded.actions.openRightbar(true, false)
+    expect(reloaded.store.getSnapshot().layoutInfo.rightbar).toBe(450)
+  })
+
+  it('writes storage only when a width preference moves', () => {
+    localStorage.setItem(layoutWidthPersistence, '{"sidebar":280,"rightbar":600}')
+    const write = vi.spyOn(Storage.prototype, 'setItem')
+    const { actions } = createLayoutStore().create()
+    expect(write).not.toHaveBeenCalled()
+    actions.selectPanel('panel-a' as MainPanelId)
+    actions.setViewportWidth(1500)
+    actions.openRightbar(true, false)
+    actions.closeRightbar()
+    expect(write).not.toHaveBeenCalled()
+    actions.setSidebar(400)
+    expect(write).toHaveBeenCalledTimes(1)
+    expect(write).toHaveBeenCalledWith(layoutWidthPersistence, '{"sidebar":400,"rightbar":600}')
+  })
+
+  it.each([
+    ['broken json', '{'],
+    ['missing sidebar', '{"rightbar":600}'],
+    ['non-finite sidebar', '{"sidebar":"wide","rightbar":600}'],
+    ['below-floor rightbar', '{"sidebar":400,"rightbar":100}'],
+  ])('drops a corrupted entry (%s) and keeps the defaults', (_label, raw) => {
+    localStorage.setItem(layoutWidthPersistence, raw)
+    const { store } = createLayoutStore().create()
+    expect(store.getSnapshot().layoutInfo).toMatchObject({ sidebar: 280, rightbar: null })
+    expect(localStorage.getItem(layoutWidthPersistence)).toBeNull()
+  })
+
+  it('works without localStorage', () => {
+    vi.stubGlobal('localStorage', undefined)
+    const { store, actions } = createLayoutStore().create()
+    expect(store.getSnapshot().layoutInfo.sidebar).toBe(280)
+    actions.setSidebar(400)
+    expect(store.getSnapshot().layoutInfo.sidebar).toBe(400)
+  })
+
+  it('drops the persisted preferences through clearPersisted', () => {
+    const instance = createLayoutStore().create()
+    instance.actions.setSidebar(400)
+    instance.clearPersisted()
+    expect(localStorage.getItem(layoutWidthPersistence)).toBeNull()
   })
 })

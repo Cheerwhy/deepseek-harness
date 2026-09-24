@@ -8,6 +8,12 @@ import {
   clampWidth, RIGHTBAR_DEFAULT_RATIO, RIGHTBAR_MAX_RATIO, RIGHTBAR_MIN,
   SIDEBAR_AUTO_COLLAPSE, SIDEBAR_DEFAULT, SIDEBAR_MAX, SIDEBAR_MIN,
 } from './columns.ts'
+import { clearLayoutWidths, readLayoutWidths, writeLayoutWidths, type LayoutWidths } from './persistence.ts'
+
+/** The persistable slice of one snapshot: both dragged width preferences. */
+function draggedWidths(state: LayoutState): LayoutWidths {
+  return { sidebar: state.layoutInfo.sidebar, rightbar: state.layoutInfo.rightbar }
+}
 
 /**
  * Transient layout preferences. Responsive concessions never rewrite widths;
@@ -72,24 +78,29 @@ type LayoutActions = {
  * default. The right panel initializes at 45% of the frame on first opening
  * and keeps that px preference across resizes and close. Drag writes clamp to
  * the current frame's range. Narrow sidebar toggles change only the expansion
- * override; opening the right panel clears that override.
+ * override; opening the right panel clears that override. Both width
+ * preferences rehydrate from and mirror to localStorage (persistence.ts);
+ * everything else stays transient.
  * @returns the store handle (spec + type + identity + factory in one).
  */
 export function createLayoutStore(): EngineStoreHandle<LayoutState, LayoutActions>  {
   const handle = defineStore({
-    init: (): LayoutState => ({
-      panelInfo: { activePanelId: null },
-      layoutInfo: {
-        sidebar: SIDEBAR_DEFAULT,
-        viewportWidth: window.innerWidth,
-        narrowExpanded: false,
-        rightbar: null,
-        rightbarShown: false,
-        rightbarTrack: false,
-        rightbarFullscreen: false,
-        rightbarInstant: false,
-      },
-    }),
+    init: (): LayoutState => {
+      const saved = readLayoutWidths()
+      return {
+        panelInfo: { activePanelId: null },
+        layoutInfo: {
+          sidebar: saved?.sidebar ?? SIDEBAR_DEFAULT,
+          viewportWidth: window.innerWidth,
+          narrowExpanded: false,
+          rightbar: saved?.rightbar ?? null,
+          rightbarShown: false,
+          rightbarTrack: false,
+          rightbarFullscreen: false,
+          rightbarInstant: false,
+        },
+      }
+    },
     actions: {
       selectPanel: (d, panelId: MainPanelId | null) => {
         d.panelInfo.activePanelId = panelId
@@ -142,5 +153,17 @@ export function createLayoutStore(): EngineStoreHandle<LayoutState, LayoutAction
       },
     },
   })
-  return handle
+  return { ...handle, create(scopeKey?: string) {
+    const instance = handle.create(scopeKey)
+    // The mirror starts at the rehydrated (or default) preferences, so a bare
+    // mount performs no storage write; unrelated reports never touch storage.
+    let written = draggedWidths(instance.getSnapshot())
+    instance.subscribe(() => {
+      const widths = draggedWidths(instance.getSnapshot())
+      if (widths.sidebar === written.sidebar && widths.rightbar === written.rightbar) return
+      written = widths
+      writeLayoutWidths(widths)
+    })
+    return { ...instance, clearPersisted: clearLayoutWidths }
+  } }
 }

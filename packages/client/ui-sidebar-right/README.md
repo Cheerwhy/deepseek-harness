@@ -36,7 +36,7 @@ The layout itself — the split tree, its operations, the drag gestures, the flo
 <a id="presentations"></a>
 ## Presentations
 
-Normal and fullscreen presentations share the same content tree, so switching does not remount tabs. The normal panel anchors to the right column; fullscreen covers the viewport while retaining the wide-screen columns underneath. Opening below 768px uses fullscreen automatically; leaving fullscreen on a narrow viewport closes the panel, and widening does not reopen a closed panel. A fullscreen opening keeps the underlying columns unchanged until its slide finishes, then prepares the normal track without a column transition. Before a fullscreen panel retreats, closing prepares a full-width conversation and restoring prepares the normal right track; the background does not animate during the retreat.
+Normal and fullscreen presentations share the same content tree, so switching does not remount tabs. The normal panel anchors to the right column; fullscreen covers the viewport while retaining the wide-screen columns underneath. Opening below 768px uses fullscreen automatically; leaving fullscreen on a narrow viewport closes the panel, and widening does not reopen a closed panel. A fullscreen opening keeps the underlying columns unchanged until its slide finishes, then prepares the normal track without a column transition. Before a fullscreen panel retreats, closing prepares a full-width conversation and restoring prepares the normal right track; the background does not animate during the retreat. Every opening slides the panel in on the frame's curve: the first opening and a reopening after the last tab closed insert the sliding dock content fresh, where a transition alone has no start state, so the opening flip briefly marks the panel and only that mark carries an enter animation on the curve; structural changes inside an open panel — a split, a float, a tab switch — never carry the mark and stay unanimated.
 
 | Mode | The track | The panel |
 |---|---|---|
@@ -139,6 +139,7 @@ None; this package neither assembles nor sends a provider request.
 - **Undo is not exposed.** The recorded sequence is stepped only through the `@internal` service methods; product controls are deliberately absent.
 - **Titles are fixed at open time.** A type's `title(address)` is captured into the record; a live title comes only from the optional title seat.
 - **No content navigation stack.** Stepping back replays layout operations; an editor-style back/forward over visited content is not built.
+- **Closing the last tab hides the panel instantly.** The empty dock that replaces the host is inserted already collapsed with nothing visible to slide out; a delayed unmount would be needed to slide it.
 
 <a id="dev-note"></a>
 ### Dev Note

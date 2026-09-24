@@ -203,9 +203,9 @@ export function AppFrame({
   // Track-level transitions pause for the whole gesture: eased tracks would
   // detach the column edge from the pointer (AppFrame.module.css).
   const [dragging, setDragging] = useState(false)
-  // Track easing is scoped to a discrete open/close toggle: data-animating
-  // goes up when the collapse state or the rightbar track flips and comes down
-  // at transition end (timeout as the reduced-motion/covered-frame fallback).
+  // Track easing is scoped to a discrete open/close toggle. Mark the frame in
+  // the toggle's render so the new columns and their transition start together;
+  // the state keeps that marker through the transition end (or timeout).
   // Steady-state viewport updates stay instant (AppFrame.module.css), and so
   // does a toggle arriving together with a viewport change — that is the
   // responsive auto-collapse firing mid window-resize, where easing would
@@ -215,14 +215,19 @@ export function AppFrame({
   const trackToggle = `${sidebarCollapsed}:${layoutInfo.rightbarTrack}`
   const previousToggle = useRef(trackToggle)
   const previousViewport = useRef(viewport)
+  const viewportChanged = previousViewport.current !== viewport
+  const toggleChanged = previousToggle.current !== trackToggle
+  const animateTrack = !viewportChanged && (toggleChanged || animating > 0)
   useLayoutEffect(() => {
-    const viewportChanged = previousViewport.current !== viewport
     previousViewport.current = viewport
-    if (previousToggle.current === trackToggle) return
     previousToggle.current = trackToggle
-    if (viewportChanged) return
+    if (viewportChanged) {
+      if (animating > 0) setAnimating(0)
+      return
+    }
+    if (!toggleChanged) return
     setAnimating(token => token + 1)
-  }, [trackToggle, viewport])
+  }, [trackToggle, viewport, toggleChanged, viewportChanged, animating])
   useEffect(() => {
     if (animating === 0) return
     const frame = frameRef.current
@@ -288,7 +293,7 @@ export function AppFrame({
       data-rightbar-fullscreen={layoutInfo.rightbarFullscreen || undefined}
       data-rightbar-instant={layoutInfo.rightbarInstant || undefined}
       data-dragging={dragging || undefined}
-      data-animating={animating > 0 || undefined}
+      data-animating={animateTrack || undefined}
     >
       {/* First child: app-regions compose in document order, so everything
           mounted later (chrome controls, overlays) subtracts its no-drag

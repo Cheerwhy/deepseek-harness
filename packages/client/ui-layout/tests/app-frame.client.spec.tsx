@@ -4,6 +4,7 @@ import type { GlobalStandardProps, RenderOpts } from '@deepseek-ai/dsh-client-ui
 import { bindSnapshotSelector } from '@deepseek-ai/dsh-client-test-runtime'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, render } from '@testing-library/react'
+import { useLayoutEffect, useRef } from 'react'
 import { AppFrame } from '../src/client/AppFrame.tsx'
 import type { AppFrameProps } from '../src/client/AppFrame.tsx'
 import type { MainPanelId, RightbarOwnerProps, SidebarOwnerProps } from '../src/client/index.ts'
@@ -60,12 +61,22 @@ function resize(width: number): void {
   })
 }
 
-function mountFrame(windowWidth = frameWidth) {
+function RightbarCommitProbe({ onLayout }: { onLayout: (frame: HTMLElement) => void }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const frame = ref.current?.parentElement?.parentElement
+    if (frame !== undefined && frame !== null) onLayout(frame)
+  })
+  return <div ref={ref} data-testid="rightbar-content" />
+}
+
+function mountFrame(windowWidth = frameWidth, onRightbarLayout?: (frame: HTMLElement) => void) {
   vi.stubGlobal('innerWidth', windowWidth)
   const instance = createLayoutStore().create()
   const slotCalls: { key: string; props: object; options: RenderOpts | undefined }[] = []
   const renderSlot: AppFrameProps['renderSlot'] = (key, owner, options) => {
     slotCalls.push({ key, props: owner, options })
+    if (key === 'rightbar' && onRightbarLayout !== undefined) return <RightbarCommitProbe onLayout={onRightbarLayout} />
     return <div data-testid={`${key}-content`} data-entry-key={options?.entryKey} />
   }
   const useSessions: AppFrameProps['useSessions'] = sel => sel({
@@ -462,6 +473,20 @@ describe('AppFrame right panel presentation', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  it('marks the rightbar track in the same commit that changes the center width', () => {
+    const commits: { width: number; animating: boolean }[] = []
+    const { instance } = mountFrame(frameWidth, (frame) => {
+      commits.push({ width: tracks(frame)[1]!, animating: frame.hasAttribute('data-animating') })
+    })
+    commits.length = 0
+    act(() => { instance.actions.openRightbar(true, false) })
+    expect(commits[0]?.width).toBeGreaterThan(0)
+    expect(commits[0]?.animating).toBe(true)
+    commits.length = 0
+    act(() => { instance.actions.closeRightbar() })
+    expect(commits[0]).toEqual({ width: 0, animating: true })
   })
 
   it('keeps fullscreen suppression independent from resetting the instant marker', () => {

@@ -16,6 +16,15 @@
  * edge therefore travel together. Visibility flips after the slide so the box
  * is out of reach once off-edge, and flips back before the slide starts.
  *
+ * A transition needs the element already painted, but the sliding element is
+ * inserted fresh on the first opening and reinserted after the last tab closed
+ * (the empty dock replaces the host), so those openings would render in place
+ * with no slide. The panel therefore wears an entering mark through the
+ * opening flip (SidebarPanel) and that mark carries an enter animation on the
+ * transition's curve. Starting to match the open rule is not a trigger: hosts
+ * and dividers that a split, a float, or a tab switch inserts inside an open
+ * panel match with no mark, so structural changes stay unanimated.
+ *
  * The normal panel is below frame overlays (20); fullscreen (40) covers the
  * frame and remains below independently floating panels (60). The common
  * content root owns no stacking context or transform.
@@ -59,6 +68,24 @@
   transform: none;
   visibility: visible;
   transition: transform var(--ds-transition-duration-slow) var(--ds-ease-in-out);
+}
+
+/* The opening flip sets the entering mark for the slide's duration plus slack
+   (SidebarPanel). A re-expansion of a kept host plays the animation beside the
+   equivalent transition; the mark is absent on a panel that mounts already
+   expanded (a restored surface). */
+.panel[data-sidebar-right-open][data-sidebar-right-entering] :global([data-dockkit-host='dock']),
+.panel[data-sidebar-right-open][data-sidebar-right-entering] :global([data-dockkit-empty]),
+.panel[data-sidebar-right-open][data-sidebar-right-entering] :global([data-dockkit-divider]) {
+  animation: dsh-sidebar-right-enter var(--ds-transition-duration-slow) var(--ds-ease-in-out);
+}
+
+/* Only transform enters: visibility is discrete and would step halfway through
+   the slide instead of moving with it. */
+@keyframes dsh-sidebar-right-enter {
+  from {
+    transform: translateX(var(--dsh-sidebar-width));
+  }
 }
 
 /* One-frame app-region pulse at each open/close edge (RightbarSeat): changing
@@ -122,8 +149,15 @@
 @media (prefers-reduced-motion: reduce) {
   .panel :global([data-dockkit-host='dock']),
   .panel :global([data-dockkit-empty]),
-  .panel :global([data-dockkit-divider]) {
+  .panel :global([data-dockkit-divider]),
+  .panel[data-sidebar-right-open] :global([data-dockkit-host='dock']),
+  .panel[data-sidebar-right-open] :global([data-dockkit-empty]),
+  .panel[data-sidebar-right-open] :global([data-dockkit-divider]),
+  .panel[data-sidebar-right-open][data-sidebar-right-entering] :global([data-dockkit-host='dock']),
+  .panel[data-sidebar-right-open][data-sidebar-right-entering] :global([data-dockkit-empty]),
+  .panel[data-sidebar-right-open][data-sidebar-right-entering] :global([data-dockkit-divider]) {
     transition: none;
+    animation: none;
   }
 }
 

@@ -290,6 +290,25 @@ describe('RightbarSeat presentation', () => {
     expect(h.frame.closeRightbar).toHaveBeenCalled()
   })
 
+  it('carries the entering mark only through the opening flip', async () => {
+    const h = await mountSeat()
+    const panel = element(h.view.container, '[data-sidebar-right-panel]')
+    expect(panel.hasAttribute('data-sidebar-right-entering')).toBe(false)
+    const first = h.open('a.txt')
+    h.open('b.txt')
+    expect(panel.hasAttribute('data-sidebar-right-entering')).toBe(true)
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 450)) })
+    expect(panel.hasAttribute('data-sidebar-right-entering')).toBe(false)
+    // Structural changes inside the open panel never re-mark: a split adds a
+    // host and a divider, a focus switch replaces the active tab's body.
+    act(() => { h.controller.split() })
+    act(() => { h.controller.focus(first.id) })
+    expect(panel.hasAttribute('data-sidebar-right-entering')).toBe(false)
+    act(() => { h.controller.toggleExpanded() })
+    act(() => { h.controller.toggleExpanded() })
+    expect(panel.hasAttribute('data-sidebar-right-entering')).toBe(true)
+  })
+
   it('skips the nudge while the darwin seat has no surface to render', async () => {
     // The seat's first render returns null (the open effect has not created
     // the surface yet), so the nudge effect fires with an unattached panel ref.

@@ -27,7 +27,7 @@
  * signal, actions — is read through the slot-owned useTabInfo hook. The Tab
  * domain follows each session's store commits, including sessions off screen.
  */
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode, RefObject } from 'react'
 import { IconPanelLeftOutlineRegular, Tooltip } from '@deepseek-ai/dsh-client-ui-primitives'
 import type {
@@ -282,6 +282,9 @@ function PanelChrome({ sessionId, fullscreen, autoFullscreen, actions, t }: Pick
   )
 }
 
+/** How long the panel carries the entering mark: the slide curve plus slack. */
+const ENTERING_MARK_MS = 400
+
 /**
  * The panel: the docked surface with the two controls in its top-right strip,
  * anchored to the frame's right edge and slid off it while collapsed.
@@ -290,6 +293,26 @@ function SidebarPanel(panel: PanelProps & { width: number; panelRef: RefObject<H
   const { sessionId, surface, actions, t, renderSlot, openTab, width, reportRoom, fullscreen, autoFullscreen, panelRef } = panel
   const { expanded } = surface.layout
   const types = panel.useTabTypes(value => value)
+  // The enter animation belongs to the opening flip alone: starting to match
+  // the open rule is not a trigger, because a split's new host and divider,
+  // a float's structure change, and a tab switch's body replacement all start
+  // matching inside an open panel. The mark scopes the keyframes to the flip
+  // window; the layout effect sets it before the first animated frame. A panel
+  // that mounts already expanded (a restored surface) never flips and stays
+  // unmarked.
+  const [entering, setEntering] = useState(false)
+  const expandedBefore = useRef(expanded)
+  useLayoutEffect(() => {
+    const wasExpanded = expandedBefore.current
+    expandedBefore.current = expanded
+    if (!expanded || wasExpanded) {
+      setEntering(false)
+      return undefined
+    }
+    setEntering(true)
+    const settle = setTimeout(() => { setEntering(false) }, ENTERING_MARK_MS)
+    return () => { clearTimeout(settle) }
+  }, [expanded])
   return (
     <div
       ref={panelRef}
@@ -298,6 +321,7 @@ function SidebarPanel(panel: PanelProps & { width: number; panelRef: RefObject<H
         '--dsh-sidebar-width': fullscreen ? '100vw' : `${width}px` } as CSSProperties}
       data-sidebar-right-panel={fullscreen ? 'fullscreen' : 'push'}
       data-sidebar-right-open={expanded || undefined}
+      data-sidebar-right-entering={entering || undefined}
     >
       <div className={css.panelBody}>
         <DockLayout

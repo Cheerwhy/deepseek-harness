@@ -120,14 +120,17 @@ describe('ui-sidebar-right apply', () => {
   it('hands the panel seat the frame report, the service binding, the opens, the observable registry, and the Tab domain', async () => {
     const { ctx, layout, resources, seat, injectedOf } = await boot()
     const injected = injectedOf(seat('rightbar.session')) as SidebarRightInjected
-    // The frame learns the composition of expanded and presentation, nothing else.
-    injected.syncPresentation({ shown: true, track: true, fullscreen: false })
+    // The frame learns the composition of expanded and presentation, nothing
+    // else; only a restore report reaches it as the third argument.
+    injected.syncPresentation({ shown: true, track: true, fullscreen: false, restore: false })
     expect(layout.openRightbar).toHaveBeenLastCalledWith(true, false)
-    injected.syncPresentation({ shown: true, track: true, fullscreen: true })
+    injected.syncPresentation({ shown: true, track: true, fullscreen: false, restore: true })
+    expect(layout.openRightbar).toHaveBeenLastCalledWith(true, false, true)
+    injected.syncPresentation({ shown: true, track: true, fullscreen: true, restore: false })
     expect(layout.openRightbar).toHaveBeenLastCalledWith(true, true)
-    injected.syncPresentation({ shown: true, track: false, fullscreen: true })
+    injected.syncPresentation({ shown: true, track: false, fullscreen: true, restore: false })
     expect(layout.openRightbar).toHaveBeenLastCalledWith(false, true)
-    injected.syncPresentation({ shown: false, track: false, fullscreen: false })
+    injected.syncPresentation({ shown: false, track: false, fullscreen: false, restore: false })
     expect(layout.closeRightbar).toHaveBeenCalledOnce()
     // The registry, observable: what the seat dispatches a kind to.
     expect(injected.hooks.tabTypes.getSnapshot().find(type => type.kind === 'guide')?.id).toBe(GUIDE_ID)

@@ -53,7 +53,11 @@ type LayoutInfo = {
   rightbarTrack: boolean
   /** Reported fullscreen presentation; hides the outer resize handle. */
   rightbarFullscreen: boolean
-  /** Suppress transitions for a fullscreen exit until another geometry action. */
+  /**
+   * Suppress transitions for a fullscreen exit or a reload restore (the
+   * occupant's initial re-report of its persisted open state) until another
+   * geometry action.
+   */
   rightbarInstant: boolean
 }
 
@@ -68,7 +72,7 @@ type LayoutActions = {
   toggleSidebar: (draft: LayoutState) => void
   setViewportWidth: (draft: LayoutState, width: number) => void
   setRightbar: (draft: LayoutState, px: number) => void
-  openRightbar: (draft: LayoutState, track: boolean, fullscreen: boolean) => void
+  openRightbar: (draft: LayoutState, track: boolean, fullscreen: boolean, restore?: boolean) => void
   closeRightbar: (draft: LayoutState) => void
 }
 
@@ -135,9 +139,9 @@ export function createLayoutStore(): EngineStoreHandle<LayoutState, LayoutAction
         d.layoutInfo.rightbarInstant = false
         d.layoutInfo.rightbar = clampWidth(px, RIGHTBAR_MIN, Math.max(RIGHTBAR_MIN, d.layoutInfo.viewportWidth * RIGHTBAR_MAX_RATIO))
       },
-      openRightbar: (d, track: boolean, fullscreen: boolean) => {
+      openRightbar: (d, track: boolean, fullscreen: boolean, restore?: boolean) => {
         if (!d.layoutInfo.rightbarShown || d.layoutInfo.rightbarTrack !== track || d.layoutInfo.rightbarFullscreen !== fullscreen) {
-          d.layoutInfo.rightbarInstant = d.layoutInfo.rightbarFullscreen && !fullscreen
+          d.layoutInfo.rightbarInstant = restore === true || (d.layoutInfo.rightbarFullscreen && !fullscreen)
         }
         if (!d.layoutInfo.rightbarShown && d.layoutInfo.viewportWidth < SIDEBAR_AUTO_COLLAPSE) d.layoutInfo.narrowExpanded = false
         d.layoutInfo.rightbar ??= Math.max(RIGHTBAR_MIN, Math.round(d.layoutInfo.viewportWidth * RIGHTBAR_DEFAULT_RATIO))

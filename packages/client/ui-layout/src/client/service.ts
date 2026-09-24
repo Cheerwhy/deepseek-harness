@@ -45,8 +45,11 @@ export interface ILayout {
    *   including beneath a fullscreen overlay.
    * @param fullscreen - whether the panel covers the frame and hides its outer
    *   resize handle; independent of the underlying grid track.
+   * @param restore - true when this report re-installs a persisted open state
+   *   (the seat's first report after a reload or session switch); the frame
+   *   lands the columns instantly instead of easing the track.
    */
-  openRightbar(track: boolean, fullscreen: boolean): void
+  openRightbar(track: boolean, fullscreen: boolean, restore?: boolean): void
   /** Report the right panel as hidden: no track, no handle. */
   closeRightbar(): void
 }
@@ -91,8 +94,9 @@ export class LayoutController implements ILayout {
   }
 
   /** Report the right panel's track and fullscreen presentation. */
-  openRightbar(track: boolean, fullscreen: boolean): void {
-    this.panels.openRightbar(track, fullscreen)
+  openRightbar(track: boolean, fullscreen: boolean, restore?: boolean): void {
+    if (restore === true) this.panels.openRightbar(track, fullscreen, true)
+    else this.panels.openRightbar(track, fullscreen)
   }
 
   /** Report the right panel as hidden: no track, no handle. */

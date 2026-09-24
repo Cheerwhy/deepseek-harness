@@ -12,6 +12,7 @@ import { dockPaneIds, getPane } from '@deepseek-ai/dsh-client-ui-dockkit'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
 import { apply, inject } from '../src/client/index.ts'
 import { intentsFor } from '../src/client/shell/SidebarRight.tsx'
+import { sidebarPersistence } from '../src/client/persistence.ts'
 import type { SidebarRightTabInfo, SidebarRightTabMenuOwnerProps } from '../src/client/contract/slots.ts'
 import type { createSidebarRightStore } from '../src/client/stores.ts'
 
@@ -275,6 +276,29 @@ describe('RightbarSeat presentation', () => {
     expect(h.layout().tabs[floating.id]).toBeUndefined()
     expect(h.layout().floats).toHaveLength(0)
     expect(getPane(h.layout(), h.layout().rootId).tabs).toHaveLength(1)
+  })
+
+  it('reports a restored open panel as an instant install on its first report', async () => {
+    const key = `${sidebarPersistence}.${SESSION}`
+    localStorage.setItem(key, JSON.stringify({ bySession: { [SESSION]: { minted: 2, layout: {
+      tabs: { tab1: { id: 'tab1', kind: 'text', contentId: 'dsh-resource://file/session/s-test/a.txt', title: 'a.txt' } },
+      nodes: { pane1: { id: 'pane1', kind: 'pane', host: 'dock', tabs: ['tab1'], activeTabId: 'tab1' } },
+      rootId: 'pane1', floats: [], activePaneId: 'pane1', expanded: true, mode: 'push',
+    } } } }))
+    try {
+      const h = await mountSeat()
+      expect(element(h.view.container, '[data-sidebar-right-panel]').hasAttribute('data-sidebar-right-open')).toBe(true)
+      // The seat mounts with its persisted open state in place; the frame must
+      // land the track instantly rather than ease it in.
+      expect(h.frame.openRightbar).toHaveBeenLastCalledWith(true, false, true)
+      // Later presentation changes report without the restore flag.
+      act(() => { h.controller.toggleExpanded() })
+      expect(h.frame.closeRightbar).toHaveBeenCalled()
+      h.open('b.txt')
+      expect(h.frame.openRightbar).toHaveBeenLastCalledWith(true, false)
+    } finally {
+      localStorage.removeItem(key)
+    }
   })
 
   it('keeps the panel mounted while collapsed and releases the frame on unmount', async () => {

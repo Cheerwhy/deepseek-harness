@@ -291,6 +291,22 @@ describe('right panel instant geometry', () => {
     actions.openRightbar(true, fullscreen)
     expect(store.getSnapshot().layoutInfo).toMatchObject({ rightbarShown: true, rightbarFullscreen: fullscreen, rightbarInstant: false })
   })
+
+  it('marks a restore report instant without touching an already-matching presentation', () => {
+    const { store, actions } = createLayoutStore().create()
+    actions.openRightbar(true, false)
+    const reported = store.getSnapshot()
+    // A repeated matching report is a no-op even with restore: only the seat's
+    // first report after mounting carries it.
+    actions.openRightbar(true, false, true)
+    expect(store.getSnapshot()).toBe(reported)
+    actions.closeRightbar()
+    actions.openRightbar(true, false, true)
+    expect(store.getSnapshot().layoutInfo).toMatchObject({ rightbarShown: true, rightbarTrack: true, rightbarInstant: true })
+    // The next geometry action drops the instant install.
+    actions.setSidebar(400)
+    expect(store.getSnapshot().layoutInfo.rightbarInstant).toBe(false)
+  })
 })
 
 describe('width preference persistence', () => {

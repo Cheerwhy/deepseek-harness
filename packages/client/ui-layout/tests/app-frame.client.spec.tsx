@@ -476,6 +476,22 @@ describe('AppFrame right panel presentation', () => {
     }
   })
 
+  it('installs a restored right track instantly and eases later toggles', () => {
+    const { frame, instance } = mountFrame()
+    // A reload restore re-reports the persisted open state (restore=true); the
+    // track lands with the frame and no easing window opens — the centre never
+    // animates over a panel the user never opened.
+    act(() => { instance.actions.openRightbar(true, false, true) })
+    expect(frame.dataset.animating).toBeUndefined()
+    expect(frame.dataset.rightbarInstant).toBe('true')
+    expect(tracks(frame)[1]).toBeGreaterThan(0)
+    // The install left no residual settle window, and a later toggle eases.
+    act(() => { instance.actions.selectPanel('panel-a' as MainPanelId) })
+    expect(frame.dataset.animating).toBeUndefined()
+    act(() => { instance.actions.closeRightbar() })
+    expect(frame.dataset.animating).toBe('true')
+  })
+
   it('marks the rightbar track in the same commit that changes the center width', () => {
     const commits: { width: number; animating: boolean }[] = []
     const { instance } = mountFrame(frameWidth, (frame) => {

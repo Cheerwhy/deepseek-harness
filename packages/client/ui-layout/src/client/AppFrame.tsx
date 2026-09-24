@@ -209,15 +209,17 @@ export function AppFrame({
   // Steady-state viewport updates stay instant (AppFrame.module.css), and so
   // does a toggle arriving together with a viewport change — that is the
   // responsive auto-collapse firing mid window-resize, where easing would
-  // chase the live window edge. The counter restarts the settle window when a
-  // re-toggle interrupts a running transition.
+  // chase the live window edge. An instant report (a reload restore or a
+  // fullscreen exit, rightbarInstant) installs its columns without the curve
+  // and without opening a settle window. The counter restarts the settle
+  // window when a re-toggle interrupts a running transition.
   const [animating, setAnimating] = useState(0)
   const trackToggle = `${sidebarCollapsed}:${layoutInfo.rightbarTrack}`
   const previousToggle = useRef(trackToggle)
   const previousViewport = useRef(viewport)
   const viewportChanged = previousViewport.current !== viewport
   const toggleChanged = previousToggle.current !== trackToggle
-  const animateTrack = !viewportChanged && (toggleChanged || animating > 0)
+  const animateTrack = !layoutInfo.rightbarInstant && !viewportChanged && (toggleChanged || animating > 0)
   useLayoutEffect(() => {
     previousViewport.current = viewport
     previousToggle.current = trackToggle
@@ -226,8 +228,11 @@ export function AppFrame({
       return
     }
     if (!toggleChanged) return
+    // An instant install neither marks the frame nor opens a settle window;
+    // the swallowed toggle has already updated previousToggle above.
+    if (layoutInfo.rightbarInstant) return
     setAnimating(token => token + 1)
-  }, [trackToggle, viewport, toggleChanged, viewportChanged, animating])
+  }, [trackToggle, viewport, toggleChanged, viewportChanged, animating, layoutInfo.rightbarInstant])
   useEffect(() => {
     if (animating === 0) return
     const frame = frameRef.current

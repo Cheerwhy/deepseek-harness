@@ -104,9 +104,9 @@ export const SERVICE_API: readonly ServiceApiEntry[] = [
         parameters: [],
       },
       {
-        signature: 'openRightbar(track: boolean, fullscreen: boolean): void',
+        signature: 'openRightbar(track: boolean, fullscreen: boolean, restore?: boolean): void',
         description: 'Report the right panel\'s presentation without changing its expanded state.',
-        parameters: [{ name: 'track', description: 'whether the normal panel width reserves a grid track, including beneath a fullscreen overlay.' }, { name: 'fullscreen', description: 'whether the panel covers the frame and hides its outer resize handle; independent of the underlying grid track.' }],
+        parameters: [{ name: 'track', description: 'whether the normal panel width reserves a grid track, including beneath a fullscreen overlay.' }, { name: 'fullscreen', description: 'whether the panel covers the frame and hides its outer resize handle; independent of the underlying grid track.' }, { name: 'restore', description: 'true when this report re-installs a persisted open state (the seat\'s first report after a reload or session switch); the frame lands the columns instantly instead of easing the track.' }],
       },
       {
         signature: 'closeRightbar(): void',

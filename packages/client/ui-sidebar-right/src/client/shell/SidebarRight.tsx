@@ -63,6 +63,12 @@ export interface SidebarRightPresentation {
   readonly track: boolean
   /** Whether the panel fills the viewport, independently of its retained track. */
   readonly fullscreen: boolean
+  /**
+   * True only on this seat's first report: the seat mounts with its persisted
+   * open state already in place, so the frame lands the columns instantly
+   * instead of easing a track over a panel the user never opened.
+   */
+  readonly restore: boolean
 }
 
 /** What this package needs from its host beyond the framework shares. */
@@ -415,6 +421,9 @@ export function RightbarSeat({
 
   // Fullscreen leaves the previous column report in force until its own slide
   // completes. Normal presentation and zero-duration transitions report before paint.
+  // The first report a seat makes restores its persisted presentation (also
+  // after a fullscreen entry's slide delays it), so it carries `restore`.
+  const reported = useRef(false)
   useLayoutEffect(() => {
     if (!active) return
     let disposed = false
@@ -427,7 +436,9 @@ export function RightbarSeat({
           && animation.playState !== 'finished' && animation.playState !== 'idle')
         : []
       if (entering.length === 0) {
-        syncPresentation({ shown, track, fullscreen })
+        const restore = !reported.current
+        reported.current = true
+        syncPresentation({ shown, track, fullscreen, restore })
         return
       }
       // Cancellation can replace the transition or remove it for reduced motion.
@@ -439,7 +450,7 @@ export function RightbarSeat({
   // Leaving is part of that report: a seat that unmounts with its session must
   // hand the track back rather than leave one sized for a surface nobody draws.
   useLayoutEffect(() => active
-    ? () => { syncPresentation({ shown: false, track: false, fullscreen: false }) }
+    ? () => { syncPresentation({ shown: false, track: false, fullscreen: false, restore: false }) }
     : undefined, [syncPresentation, active])
 
   // Republished on every committed change: the service's readers answer from the

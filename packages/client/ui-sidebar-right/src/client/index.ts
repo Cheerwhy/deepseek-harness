@@ -151,9 +151,13 @@ export function apply(ctx: ClientContext): void {
     }
     const layout: ILayout = ctx.layout
     const injected: Omit<SidebarRightInjected, 'keyedHooks' | 'occurrence' | 'closeTab'> = {
-      syncPresentation({ shown, track, fullscreen }) {
-        if (shown) layout.openRightbar(track, fullscreen)
-        else layout.closeRightbar()
+      syncPresentation({ shown, track, fullscreen, restore }) {
+        if (!shown) {
+          layout.closeRightbar()
+          return
+        }
+        if (restore) layout.openRightbar(track, fullscreen, true)
+        else layout.openRightbar(track, fullscreen)
       },
       bindService: binding => controller.bind(binding),
       openTab: (kind, options) => { controller.openTab(kind, options) },

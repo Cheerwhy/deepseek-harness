@@ -8,7 +8,7 @@ describe('Client Cordis inspect catalog', () => {
         'selectPanel(panelId: MainPanelId | null): void',
         'beginNavigation(): AbortSignal',
         'toggleSidebar(): void',
-        'openRightbar(track: boolean, fullscreen: boolean): void',
+        'openRightbar(track: boolean, fullscreen: boolean, restore?: boolean): void',
         'closeRightbar(): void',
       ])
     expect(SERVICE_API.find(service => service.key === 'workspaces')?.methods.map(method => method.signature))

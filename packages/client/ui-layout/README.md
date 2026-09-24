@@ -86,7 +86,7 @@ These limits define the current layout behavior. They are current package constr
 
 - **Width preferences persist frame-wide, not per Session** — both edge-column width preferences (and a closed sidebar) reload from one `dsh.layout.widths.v1` localStorage entry; frame measurements, the responsive override, and occupant presentation reports stay transient.
 - **Extremely narrow windows** — after the right panel closes, the center may still fall below 400px; the left 56px rail remains.
-- **Track and panel travel on one shared curve only while animating** — during a discrete open/close the frame sets `data-animating` in the same render as the new columns; its track transition and the occupant's slide read the same duration and easing variables. Drags and instant presentation switches run transition-free, so the curve does not cover them.
+- **Track and panel travel on one shared curve only while animating** — during a discrete open/close the frame sets `data-animating` in the same render as the new columns; its track transition and the occupant's slide read the same duration and easing variables. Drags and instant presentation switches run transition-free, so the curve does not cover them, and the occupant's first report after a reload or a session switch is flagged as a restore and lands its track instantly without the curve.
 - **No scroll anchoring during squeeze reflow** — layout changes may move the reader's viewport.
 
 <a id="dev-note"></a>

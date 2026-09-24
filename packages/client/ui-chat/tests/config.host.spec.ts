@@ -23,7 +23,7 @@ describe('ui-chat Host settings', () => {
     }
     for (const mode of ['dense', '', 42, false, {}, null, undefined]) {
       await configuration.update({ transcriptView: mode })
-      expect(plainConfig(configuration.fiber.config)).toMatchObject({ transcriptView: 'standard' })
+      expect(plainConfig(configuration.fiber.config)).toMatchObject({ transcriptView: 'normal' })
     }
     await configuration.update({ performanceUsage: 'compact' })
     expect(plainConfig(configuration.fiber.config)).toMatchObject({ performanceUsage: 'compact' })

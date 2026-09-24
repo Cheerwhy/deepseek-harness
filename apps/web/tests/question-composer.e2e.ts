@@ -296,11 +296,11 @@ describe('web e2e: resident question composer round trip', () => {
     expect(await page.locator('[data-question-key]').count()).toBe(0)
     expect(await selectedRow.locator('[data-state="warning"]').count()).toBe(0)
     await expect.poll(() => page.locator('[data-composer-input]').first().isEnabled(), { timeout: 10_000 }).toBe(true)
-    // The default golden pins Compact mode before process disclosure.
+    // The scaffold golden pins Standard mode before process disclosure.
     const snapshot = await captureStableAria(page, '[class*="centerCol"]', scaffold.workspaceCwd)
     await compareOrRefreshGolden(ANSWERED_EXPECTED, snapshot, MODE)
     // Keep the ask_user_question card's readable answer in the expanded golden
-    // even though Compact mode hides the process by default.
+    // even though Standard mode hides the process by default.
     await expandTurnProcesses(page)
     const answeredRow = page.getByRole('button', { name: 'Ask question 1/1 answered', exact: true })
     await answeredRow.click()

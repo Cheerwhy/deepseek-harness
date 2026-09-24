@@ -2,7 +2,7 @@ import { memo, useCallback, useMemo, type KeyboardEvent, type MouseEvent, type R
 import clsx from 'clsx'
 import {
   CodeBlock, DiffBlock, DisclosureRow, IconInspectOutlineRegular, ReadBlock, SearchBlock,
-  TerminalBlock, TextShimmer, WebBlock,
+  TerminalBlock, WebBlock,
   diffTotals,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsRenderSlots, TranslateNS } from '@deepseek-ai/dsh-client-ui-slots'
@@ -211,7 +211,7 @@ export const ToolRow = memo(function ToolRow({
           onClick={openFile}
           onKeyDown={fileLinkKeyDown}
         >
-          <TextShimmer active={running}>{summaryText}</TextShimmer>
+          <span>{summaryText}</span>
         </button>
       ) : (
         <span
@@ -221,14 +221,14 @@ export const ToolRow = memo(function ToolRow({
             state === 'stopped' && css.stoppedSummary,
           )}
         >
-          <TextShimmer active={running}>{summaryText}</TextShimmer>
+          <span>{summaryText}</span>
         </span>
       )}
       {suffix !== null && (
-        <TextShimmer className={clsx(css.summarySuffix, suffix === diffStat && css.diffStat)} active={running}>{suffix}</TextShimmer>
+        <span className={clsx(css.summarySuffix, suffix === diffStat && css.diffStat)}>{suffix}</span>
       )}
     </>
-  ), [diffStat, fileLinkKeyDown, openFile, running, state, suffix, summaryText])
+  ), [diffStat, fileLinkKeyDown, openFile, state, suffix, summaryText])
   const expandedContent = useMemo(() => open ? (
     <div className={clsx(css.bodyWrap, detailsBody !== null && css.detailsBodyWrap)}>
       {askQuestionBody !== null

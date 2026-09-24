@@ -1,7 +1,7 @@
 // An enclosing `[data-conversation-scroll]` owns scrolling when present;
 // otherwise this view owns it. Each row subscribes to one stable node key.
 
-import { memo, useCallback, useMemo, useRef, useState, type ComponentProps } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react'
 import type {
   NodeKey, RenderEntry, RenderMessageImages,
 } from '@deepseek-ai/dsh-client-ui-conversation/client'
@@ -12,6 +12,7 @@ import {
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { ChatViewSlotProps, OpenFileOptions } from '../contract/slots.ts'
 import type { ChatSnapshot } from '../contract/snapshot.ts'
+import type { ConversationTimelineSnapshot } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import { PendingSteeringBubble, PendingSubmissionBubble } from './MessageItem.tsx'
 import { ChatNodeSeat } from './ChatNodeSeat.tsx'
 import { ChatGroupSeat } from './ChatGroupSeat.tsx'
@@ -19,8 +20,10 @@ import { chatRenderKey } from './render-entry.ts'
 import { assertNever } from '@deepseek-ai/dsh-util-values'
 import { TurnNavigator } from './TurnNavigator.tsx'
 import { mergeTurnRailItems } from './turn-rail-items.ts'
+import { formatRunDuration } from './message-chrome.ts'
 import { useChatScroll } from './use-chat-scroll.ts'
 import { fileMediaUrl, resolveWorkspacePath } from '@deepseek-ai/dsh-util-workspace-path'
+import a11yCss from './accessibility.module.css'
 import css from './ChatView.module.css'
 
 /** Host/OS refusal text for the file-open dialog; empty throws keep a locale fallback. */
@@ -53,6 +56,76 @@ function observedInputs(
   return { rpcIds: observed, lastInputTurn }
 }
 
+function runningTurnStartTime(timeline: ConversationTimelineSnapshot): number | null {
+  let latest: number | null = null
+  for (const turn of timeline.turns.values()) {
+    if (turn.status === 'open') latest = turn.start?.time ?? null
+  }
+  return latest
+}
+
+function latestEndedTurn(timeline: ConversationTimelineSnapshot): {
+  readonly turn: number
+  readonly outcome: 'stopped' | 'failed' | 'worked'
+} | null {
+  for (let index = timeline.turnOrder.length - 1; index >= 0; index--) {
+    const key = timeline.turnOrder[index]
+    if (key === undefined) continue
+    const turn = timeline.turns.get(key)
+    if (turn?.end === undefined) continue
+    const reason = turn.end.data.reason.kind
+    return { turn: turn.turn, outcome: reason === 'aborted' ? 'stopped' : reason === 'error' ? 'failed' : 'worked' }
+  }
+  return null
+}
+
+/** Turn-level activity remains visible at the end of the live conversation. */
+function TurnStatus({ running, startTime, endedTurn, t }: {
+  running: boolean
+  startTime: number | null
+  endedTurn: ReturnType<typeof latestEndedTurn>
+  t: ChatViewSlotProps['t']
+}) {
+  const [mountedAt] = useState(Date.now)
+  const anchor = startTime ?? mountedAt
+  const [elapsedMs, setElapsedMs] = useState(() => Math.max(0, Date.now() - anchor))
+  const [announcedOutcome, setAnnouncedOutcome] = useState<NonNullable<typeof endedTurn> | null>(null)
+  const announcedTurn = useRef(endedTurn?.turn)
+  useEffect(() => {
+    if (endedTurn !== null && endedTurn.turn !== announcedTurn.current) {
+      announcedTurn.current = endedTurn.turn
+      setAnnouncedOutcome(endedTurn)
+    }
+  }, [endedTurn?.turn, endedTurn?.outcome])
+  useEffect(() => {
+    if (!running) return
+    const tick = (): void => { setElapsedMs(Math.max(0, Date.now() - anchor)) }
+    tick()
+    const timer = setInterval(tick, 1000)
+    return () => { clearInterval(timer) }
+  }, [anchor, running])
+  return (
+    <>
+      <span className={a11yCss.visuallyHidden} data-turn-completion
+        aria-live="polite" aria-atomic="true">
+        {announcedOutcome === null ? '' : announcedOutcome.outcome === 'stopped'
+          ? t('chat.turnStopped', { turn: announcedOutcome.turn })
+          : announcedOutcome.outcome === 'failed'
+            ? t('chat.turnFailed', { turn: announcedOutcome.turn })
+            : t('chat.turnCompleted', { turn: announcedOutcome.turn })}
+      </span>
+      {running && (
+        <div className={css.turnStatus} role="status" aria-live="polite" aria-atomic="true">
+          {t('chat.deepDiving')}
+          {elapsedMs >= 15_000 && (
+            <span className={css.turnStatusClock} aria-hidden="true">{formatRunDuration(elapsedMs, t)}</span>
+          )}
+        </div>
+      )}
+    </>
+  )
+}
+
 type PendingInput = PendingSubmission | InboxState['next-step'][number]
 
 type ChatNodeListProps = Omit<ComponentProps<typeof ChatNodeSeat>, 'nodeKey' | 'groupPart'> & {
@@ -60,9 +133,12 @@ type ChatNodeListProps = Omit<ComponentProps<typeof ChatNodeSeat>, 'nodeKey' | '
   readonly useChatGroup: ChatViewSlotProps['useChatGroup']
   readonly pendingInputs: readonly PendingInput[]
   readonly lastInputTurn: number | undefined
+  readonly turnStatus: ReactNode
 }
 
-const ChatNodeList = memo(function ChatNodeList({ entries, useChatGroup, pendingInputs, lastInputTurn, ...seatProps }: ChatNodeListProps) {
+const ChatNodeList = memo(function ChatNodeList({
+  entries, useChatGroup, pendingInputs, lastInputTurn, turnStatus, ...seatProps
+}: ChatNodeListProps) {
   const rows = entries.map((entry) => {
     switch (entry.kind) {
       case 'node':
@@ -90,7 +166,7 @@ const ChatNodeList = memo(function ChatNodeList({ entries, useChatGroup, pending
     const index = pendingInputs.findIndex(item => 'requestId' in item && item.placement === 'transcript')
     if (index !== -1) rows.splice(rows.length - 1, 0, ...pendingRows.splice(index, 1))
   }
-  return [...rows, ...pendingRows]
+  return [...rows, turnStatus, ...pendingRows]
 })
 
 /**
@@ -107,6 +183,7 @@ export function ChatView({
   const entries = useMemo<readonly RenderEntry[]>(() => groupedEntries
     ?? order.map(key => ({ kind: 'node', key: key as NodeKey })), [groupedEntries, order])
   const nodeStore = useChat(s => s.nodes)
+  const timeline = useChat(s => s.timeline)
   // The rail's items are accumulated in the Chat snapshot, so this selector is
   // both the data and its change signal: the array identity moves only when a
   // Turn enters, leaves, or changes its preview.
@@ -129,6 +206,8 @@ export function ChatView({
     },
   }), [cwd, t])
   const running = useSession(s => s.running)
+  const runningTurnStart = useMemo(() => runningTurnStartTime(timeline), [timeline])
+  const endedTurn = useMemo(() => latestEndedTurn(timeline), [timeline])
   const openState = useSession(s => s.openState)
   const openError = useSession(s => s.openError)
   const hasMore = useSession(s => s.hasMore)
@@ -250,10 +329,12 @@ export function ChatView({
                 entries={entries}
                 pendingInputs={pendingInputs}
                 lastInputTurn={lastInputTurn}
+                turnStatus={<TurnStatus key={sessionId} running={running} startTime={runningTurnStart} endedTurn={endedTurn} t={t} />}
                 nodeStore={nodeStore}
                 useChatGroup={useChatGroup}
                 useChatNode={useChatNode}
                 useChatNodeProcess={useChatNodeProcess}
+                historyIncomplete={hasMore}
                 usePresentation={usePresentation}
                 useStore={useStore}
                 actions={actions}

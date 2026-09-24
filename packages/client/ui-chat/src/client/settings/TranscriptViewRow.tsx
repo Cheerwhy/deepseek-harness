@@ -23,6 +23,7 @@ export type TranscriptViewRowProps =
   & InjectFace<TranscriptViewRowInjected>
 
 const LABELS = {
+  normal: 'settings.transcript.classic',
   compact: 'settings.transcript.compact',
   standard: 'settings.transcript.standard',
   detailed: 'settings.transcript.detailed',

@@ -44,4 +44,11 @@ describe('DisclosureRow.module.css font-size axis', () => {
       'height: calc(14px + var(--dsh-content-font-delta, 0px))',
     ]))
   })
+
+  it('sweeps a running row once and stops the sweep for reduced motion', () => {
+    expect(declarations('.row[data-running]::after')).toEqual(expect.arrayContaining([
+      'animation: dsh-disclosure-row-sweep 2.6s ease-out infinite',
+    ]))
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*\.row\[data-running\]::after \{ animation: none; \}/)
+  })
 })

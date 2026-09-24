@@ -1,6 +1,6 @@
 import { memo, useCallback, useMemo, useState } from 'react'
 import type { ChatViewSlotProps, CommandRowOwnerProps } from '../contract/slots.ts'
-import { DisclosureRow, IconApiOutlineRegular, TextShimmer } from '@deepseek-ai/dsh-client-ui-primitives'
+import { DisclosureRow, IconApiOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 import a11yCss from './accessibility.module.css'
 import css from './GenericCommandCard.module.css'
 
@@ -44,10 +44,10 @@ export const GenericCommandCard = memo(function GenericCommandCard({ node, t, ru
     <>
       <span className={css.separator} aria-hidden />
       <span className={css.summary} data-error={state === 'error' || undefined}>
-        <TextShimmer active={running}>{summary}</TextShimmer>
+        <span>{summary}</span>
       </span>
     </>
-  ), [running, state, summary])
+  ), [state, summary])
   const content = useMemo(() => open
     ? <pre className={css.body} data-error={state === 'error' || undefined}>{body}</pre>
     : undefined, [body, open, state])

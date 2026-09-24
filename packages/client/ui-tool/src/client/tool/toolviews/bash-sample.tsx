@@ -3,7 +3,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import clsx from 'clsx'
 import {
   IconApiOutlineRegular, IconChevronDownOutlineRegular, IconChevronUpOutlineRegular, IconInspectOutlineRegular,
-  TerminalBlock, TextShimmer,
+  TerminalBlock,
 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale } from '@deepseek-ai/dsh-client-ui-slots'
 import type { ToolCallViewProps } from '../../contract/slots.ts'
@@ -77,7 +77,6 @@ const StartedBashRow = memo(function StartedBashRow({ toolName, block, sessionId
   const settlementLine = state === 'error'
     ? model.errorSummary ?? normalSummary
     : state === 'stopped' ? t('bash.stopped') : null
-  const running = state === 'running'
   const toggleFromKeyboard = useCallback((event: KeyboardEvent<HTMLDivElement>) => {
     if (!expandable || (event.key !== 'Enter' && event.key !== ' ')) return
     event.preventDefault()
@@ -109,14 +108,14 @@ const StartedBashRow = memo(function StartedBashRow({ toolName, block, sessionId
       >
         <span className={css.leading}>{leading}</span>
         {status !== null && <span className={css.visuallyHidden}>{status}</span>}
-        <TextShimmer className={css.title} active={running}>{t(model.titleKey)}</TextShimmer>
+        <span className={css.title}>{t(model.titleKey)}</span>
         <span className={css.sep} aria-hidden />
         <span className={clsx(
           css.summary,
           state === 'error' && css.errorSummary,
           state === 'stopped' && css.stoppedSummary,
         )}>
-          <TextShimmer active={running}>{settlementLine ?? normalSummary}</TextShimmer>
+          <span>{settlementLine ?? normalSummary}</span>
         </span>
       </div>
       {open && (

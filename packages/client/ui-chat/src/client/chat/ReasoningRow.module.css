@@ -92,6 +92,19 @@
   text-overflow: clip;
 }
 
+.summary[data-follow-end] {
+  display: flex;
+  justify-content: flex-end;
+  mask-image: none;
+}
+
+.summary[data-follow-end] .summaryText {
+  flex: 0 0 auto;
+  width: max-content;
+  min-width: 100%;
+  text-align: start;
+}
+
 .root:not([data-preview]) .separator,
 .root:not([data-preview]) .summary {
   display: none;

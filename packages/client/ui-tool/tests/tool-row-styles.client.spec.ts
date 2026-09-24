@@ -30,6 +30,12 @@ describe('ToolRow.module.css summary line', () => {
     expect(sheet).toContain('.summary:not(.errorSummary):not(.stoppedSummary)')
   })
 
+  it('Bash uses one row-wide running sweep', () => {
+    const sheet = readFileSync(fileURLToPath(new URL('../src/client/tool/toolviews/bash-sample.module.css', import.meta.url)), 'utf8')
+    expect(sheet).toMatch(/\.root\[data-state='running'\]::after\s*\{[^}]*animation: dsh-bash-row-sweep/s)
+    expect(sheet).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*\.root\[data-state='running'\]::after \{ animation: none; \}/)
+  })
+
   it('keeps the summary suffix on one line and unshrunk', () => {
     // `flex: none` stops the box shrinking, not the text wrapping: without
     // `nowrap`, a row too narrow for title + separator + suffix wraps the `+n`

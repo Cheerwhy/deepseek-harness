@@ -67,7 +67,7 @@ describe('TranscriptViewRow', () => {
   ] as const)('selects %s and follows the mirrored value', (mode, label) => {
     const b = mount()
     fireEvent.click(screen.getByRole('button', { name: /Standard/ }))
-    expect(screen.queryByRole('menuitem', { name: 'Normal' })).toBeNull()
+    expect(screen.getByRole('menuitem', { name: 'Classic' })).toBeDefined()
     expect(screen.queryByRole('menuitem', { name: 'Expanded' })).toBeNull()
     fireEvent.click(screen.getByRole('menuitem', { name: label }))
     expect(b.setTranscriptView).toHaveBeenCalledWith(mode)
@@ -78,11 +78,14 @@ describe('TranscriptViewRow', () => {
     expect(screen.queryByRole('menuitem', { name: 'Compact' })).toBeNull()
   })
 
-  it('shows all four work-detail values in Chinese', () => {
+  it('shows all five work-detail values in Chinese', () => {
     const b = mount('compact', zh)
     expect(screen.getByText('工作步骤展示')).toBeDefined()
     expect(screen.getByText('选择希望看到多少工具调用细节')).toBeDefined()
     fireEvent.click(screen.getByRole('button', { name: '简洁' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: '经典' }))
+    expect(b.setTranscriptView).toHaveBeenLastCalledWith('normal')
+    fireEvent.click(screen.getByRole('button', { name: '经典' }))
     fireEvent.click(screen.getByRole('menuitem', { name: '标准' }))
     expect(b.setTranscriptView).toHaveBeenLastCalledWith('standard')
     fireEvent.click(screen.getByRole('button', { name: '标准' }))

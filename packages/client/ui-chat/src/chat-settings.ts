@@ -9,27 +9,21 @@ export const CHAT_SETTINGS_NAMESPACE = 'ui-chat'
 export const TRANSCRIPT_VIEW_FIELD = 'transcriptView'
 
 /** Work-details presentation modes a user can choose. */
-export const TRANSCRIPT_VIEW_MODES = ['compact', 'standard', 'detailed', 'verbose'] as const
+export const TRANSCRIPT_VIEW_MODES = ['normal', 'compact', 'standard', 'detailed', 'verbose'] as const
 
 /** Work-details presentation mode. */
 export type TranscriptViewMode = typeof TRANSCRIPT_VIEW_MODES[number]
-
-/**
- * Saved value from the two-mode generation of this setting. Read as `standard`;
- * never offered as a choice and never written back.
- */
-export const LEGACY_TRANSCRIPT_VIEW_MODE = 'normal'
 
 /** Saved `expanded` values read as `detailed`, without being offered or written back. */
 export const LEGACY_EXPANDED_TRANSCRIPT_VIEW_MODE = 'expanded'
 
 /** Every value the durable field accepts: current modes plus legacy saved values. */
 const TRANSCRIPT_VIEW_SETTING_VALUES = [
-  ...TRANSCRIPT_VIEW_MODES, LEGACY_TRANSCRIPT_VIEW_MODE, LEGACY_EXPANDED_TRANSCRIPT_VIEW_MODE,
+  ...TRANSCRIPT_VIEW_MODES, LEGACY_EXPANDED_TRANSCRIPT_VIEW_MODE,
 ] as const
 
-/** Standard process summaries for users without an explicit preference. */
-export const DEFAULT_TRANSCRIPT_VIEW_MODE: TranscriptViewMode = 'standard'
+/** Full process visibility for users without an explicit preference. */
+export const DEFAULT_TRANSCRIPT_VIEW_MODE: TranscriptViewMode = 'normal'
 
 /** Performance and usage detail levels accepted by user settings. */
 export const PERFORMANCE_USAGE_MODES = ['compact', 'detailed'] as const
@@ -49,7 +43,7 @@ export const DEFAULT_LINK_OPENING: LinkOpening = 'sidebar'
 /** Durable Chat section shared by the Host schema and browser scope. */
 export interface ChatSettings {
   /** Work-details preference; legacy values are accepted only from existing saved settings. */
-  transcriptView: TranscriptViewMode | typeof LEGACY_TRANSCRIPT_VIEW_MODE | typeof LEGACY_EXPANDED_TRANSCRIPT_VIEW_MODE
+  transcriptView: TranscriptViewMode | typeof LEGACY_EXPANDED_TRANSCRIPT_VIEW_MODE
   /** Detail level for composer statistics and completed-Turn usage. */
   performanceUsage: PerformanceUsageMode
   /** Default destination for Chat HTTP(S) links. */
@@ -60,7 +54,7 @@ export interface ChatSettings {
 export const ChatSettingsFields = {
   linkOpening: z.union(['sidebar', 'new-tab']).default(DEFAULT_LINK_OPENING),
   performanceUsage: z.union([...PERFORMANCE_USAGE_MODES]).default(DEFAULT_PERFORMANCE_USAGE),
-  // Missing and unrecognized modes both use Standard.
+  // Missing and unrecognized modes both use Normal.
   [TRANSCRIPT_VIEW_FIELD]: z.union([...TRANSCRIPT_VIEW_SETTING_VALUES]).default(DEFAULT_TRANSCRIPT_VIEW_MODE).loose(),
 }
 

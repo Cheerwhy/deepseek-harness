@@ -67,7 +67,7 @@ If steering, a User message, or a trigger notice follows process output, the Tur
 <a id="whole-turn-folding"></a>
 ## Whole-Turn folding
 
-Whole-Turn folding controls the loaded process range, independently of secondary groups, in Compact, Standard, and Detailed. Verbose keeps that range visible and retains the duration/status header without a collapse action. A recorded Turn end makes that range eligible even when paging has not loaded the Turn start.
+Whole-Turn folding controls the loaded process range, independently of secondary groups, in Classic, Compact, Standard, and Detailed. Classic requires a loaded final answer and complete Session history, and shows a count-based control. Verbose keeps that range visible and retains the duration/status header without a collapse action. In Compact, Standard, and Detailed, a recorded Turn end makes that range eligible even when paging has not loaded the Turn start.
 
 The Turn control follows all its opening inputs, including human steering and non-human trigger notices, while waiting for the first Assistant output and after that output arrives. Consecutive inputs before the first process evidence are opening inputs, anchored by the last one. Later inputs retain their positions: even when paging has not loaded their inbox insertions and they temporarily appear as ordinary User messages, preceding process content must not move after them.
 
@@ -93,13 +93,15 @@ Trigger titles and icons use the recorded `source.kind`: `schedule`, `tool-jobs`
 
 The final answer is the latest Step's settled Assistant reply, provided it has visible reply content and no tool-call block. Its response remains outside whole-Turn folding; its reasoning remains process content. User and steering inputs, trigger notices, terminal errors, max-token notices, and the completed-turn footer remain independent. Secondary grouping treats model retries as separators, but whole-Turn folding still includes retry rows.
 
-Loading an older page preserves the reader's group-opening choices. Newly loaded process content follows the same Turn state while the final answer is unchanged and whole-Turn folding remains eligible. If the page reveals an intervening input, individual group disclosures replace whole-Turn hiding. When the real start arrives, the duration becomes available; loading all history is not an additional folding condition. When new content only extends an existing group at its beginning, that group and its old message rows retain their identities and opening choices. Replies, steering, and other real boundaries in the new page still separate groups; not every new row joins the old group.
+Classic waits for that final answer and `hasMore: false` before folding. A closed Turn without a final answer, or a partial history page, keeps its process rows visible and has no Classic Turn control. Its control lists tool calls, messages, and subagents, falling back to “Thought for a while” when all counts are zero. The broader conditions in the table above apply to Compact, Standard, and Detailed.
+
+Loading an older page preserves the reader's group-opening choices. Newly loaded process content follows the same Turn state while the final answer is unchanged and whole-Turn folding remains eligible. If the page reveals an intervening input, individual group disclosures replace whole-Turn hiding. When the real start arrives, the duration becomes available. Compact, Standard, and Detailed do not require complete history for folding; Classic does. When new content only extends an existing group at its beginning, that group and its old message rows retain their identities and opening choices. Replies, steering, and other real boundaries in the new page still separate groups; not every new row joins the old group.
 
 Clicking Load older anchors the first visible content item below that button in transcript order, regardless of its position in the viewport. A collapsed group anchors its header; an expanded group skips its header and anchors its first visible member. The whole-Turn process control is excluded because paging can move it ahead of newly loaded work and steering. When a whole Turn is collapsed, the anchor is its first remaining visible message, such as steering or the final answer. Ordinary messages and steering anchor themselves; hidden and empty rows are skipped. Loading more content inside a collapsed group keeps its header stationary; adding earlier groups or rows preserves that same group header while they appear above it.
 
 Paging adds older content above the retained anchor without jumping to the new top. A capped group absorbs the displacement within its scroll range; the outer transcript absorbs the remainder, including when the group first reaches its cap. If the available scroll range is insufficient, compensation stops at the actual limit without adding bottom space. Later content growth keeps the same anchor until a reading gesture or explicit navigation releases it. Typing or clicking within the composer and non-scrolling transcript keys retain the anchor. If the reader scrolls while a page is loading, scrolling takes priority and its settled reading position becomes the new paging anchor.
 
-A running clock updates in whole seconds, starts at one second, and uses hours from 60 minutes. Completion fixes the duration; cancellation and failure replace it with their status. Lifecycle changes have a polite announcement; clock ticks do not. This control is Chat's only Turn-level running indicator.
+The blue activity label stays at the conversation end while the Session runs. Its clock appears after 15 seconds, updates in whole seconds, and uses hours from 60 minutes. A separate persistent live region announces each newly ended Turn by number as completed, stopped, or failed; clock ticks remain outside that region.
 
 Automatic collapse keeps the process open if hiding it would hide keyboard focus. Manual closing focuses the process control before hiding its members. Closing a whole Turn resets its groups and inner reasoning/tool disclosures; it does not reset unrelated renderer state. Browser find can reveal searchable hidden content.
 
@@ -108,17 +110,17 @@ Automatic collapse keeps the process open if hiding it would hide keyboard focus
 <a id="display-modes"></a>
 ## Display modes
 
-Settings → General → Work details offers `compact`, `standard` (default), `detailed`, and `verbose`; its description is “Choose how much detail to show for tool calls”. A saved `normal` reads as `standard`, and a saved `expanded` reads as `detailed`, without automatic write-back. Existing `detailed` remains `detailed`. Missing or invalid values, including the period before Host settings arrive, use `standard`; invalid values in other settings still fail validation.
+Settings → General → Work details offers `normal` (Classic, default), `compact`, `standard`, `detailed`, and `verbose`; its description is “Choose how much detail to show for tool calls”. A saved `expanded` reads as `detailed`, without automatic write-back. Existing choices keep their behavior. Missing or invalid values, including the period before Host settings arrive, use `normal`; invalid values in other settings still fail validation.
 
-| Behavior | Compact | Standard | Detailed | Verbose |
-|---|---|---|---|---|
-| Process-group header | Category summary | Summary and live task detail | Hidden in running Turns; retained in historical Turns | Hidden |
-| Process-group body | Initially collapsed | Initially collapsed | Directly visible without a group-level height cap in running Turns; manual disclosure in historical Turns | Directly visible without a group-level height cap in running and historical Turns |
-| Settled reasoning preview | Hidden | First line | First line | First line |
-| Individual reasoning and tool bodies | Manual expansion | Manual expansion | Manual expansion | Manual expansion |
-| Eligible completed Turn | Initially collapsed | Initially collapsed | Initially collapsed | Always open; duration/status header cannot collapse it |
+| Behavior | Classic | Compact | Standard | Detailed | Verbose |
+|---|---|---|---|---|---|
+| Process-group header | Hidden | Category summary | Summary and live task detail | Hidden in running Turns; retained in historical Turns | Hidden |
+| Process-group body | Directly visible without a group-level height cap | Initially collapsed | Initially collapsed | Directly visible without a group-level height cap in running Turns; manual disclosure in historical Turns | Directly visible without a group-level height cap in running and historical Turns |
+| Settled reasoning preview | First line | Hidden | First line | First line | First line |
+| Individual reasoning and tool bodies | Manual expansion | Manual expansion | Manual expansion | Manual expansion | Manual expansion |
+| Eligible completed Turn | Initially collapsed after complete history and a final answer; count-based control | Initially collapsed | Initially collapsed | Initially collapsed | Always open; duration/status header cannot collapse it |
 
-A closed group's header names the first three categories from its ranked summary, without displaying counts. A group without categories uses the thinking label. A running header names its live tool category, otherwise thinking; Standard appends live detail. Live titles remain visible for at least 150ms, retaining only the newest pending title.
+A closed group's header names the first three categories from its ranked summary, without displaying counts. A group without categories uses the thinking label. A running header names its live tool category, otherwise thinking; Standard appends live detail. Live titles remain visible for at least 150ms, retaining only the newest pending title. A running Turn shows blue activity text at the conversation end, independently of its display mode.
 
 ### Group-title rules
 
@@ -153,15 +155,15 @@ The labels below describe recorded activity, not successful outcomes. For exampl
 | Closed, three categories | Join all three ranked labels with commas. |
 | Closed, more than three categories | Show the first three labels followed by “etc.” (`等` in Chinese). |
 
-English lowercases the initial letter of joined labels after the first. Closing a group immediately selects the completed summary; the 150ms minimum applies to running-title changes, not to delaying completion. Detailed hides group headers in running Turns, including groups ended by a reply or steering before their Turn ends. Verbose also hides historical group headers.
+English lowercases the initial letter of joined labels after the first. Closing a group immediately selects the completed summary; the 150ms minimum applies to running-title changes, not to delaying completion. Detailed hides group headers in running Turns, including groups ended by a reply or steering before their Turn ends. Classic and Verbose also hide historical group headers.
 
-Group headers show a category icon, replace it with a down arrow on hover or keyboard focus, and show an up arrow while open. Manually expanded group bodies use 8px row spacing, a `min(400px, 50vh)` height cap, and 24px directional fades. Wheel scrolling can continue into the outer transcript at an edge. Detailed removes the group-level cap and uses 16px row spacing in running Turns; Verbose applies this layout to historical Turns as well.
+Group headers show a category icon, replace it with a down arrow on hover or keyboard focus, and show an up arrow while open. Manually expanded group bodies use 8px row spacing, a `min(400px, 50vh)` height cap, and 24px directional fades. Wheel scrolling can continue into the outer transcript at an edge. Detailed removes the group-level cap and uses 16px row spacing in running Turns; Classic and Verbose apply this layout to historical Turns as well.
 
 An open capped group follows content growth only while its own scroll position is at the bottom. Scrolling away pauses that group's following; returning to the bottom resumes it, independently of outer transcript following. Manually opening an unclosed group starts at the bottom and follows growth; manually opening a closed group starts at the top with following disabled, even when its initial content fits without scrolling. Closing the group in the data or restoring its height cap through a mode change does not reset an already-open reader's position. Browser find retains its own reveal position.
 
-Individual reasoning starts collapsed, including while streaming. All modes preview the latest paragraph whose first line ends with a newline; an unfinished single line has no preview. Later text in that paragraph does not change the preview. After settlement, the mode table applies. Expanded reasoning uses compact Markdown typography.
+Individual reasoning starts collapsed, including while streaming. Classic previews the latest streaming line as it grows and follows its end when the line exceeds the row. The other modes preview the latest paragraph whose first line ends with a newline; an unfinished single line has no preview, and later text in that paragraph does not change it. After settlement, the mode table applies. Expanded reasoning uses compact Markdown typography.
 
-Switching modes retains manually opened groups and inner disclosures. It changes visibility and sizing without recreating the message rows. Detailed and Verbose do not open every individual disclosure. Only Verbose keeps the whole Turn open.
+Switching modes retains manually opened groups and inner disclosures. It changes visibility and sizing without recreating the message rows. Classic, Detailed, and Verbose do not open every individual disclosure. Classic folds an eligible completed Turn; Verbose keeps the whole Turn open.
 
 -----
 
@@ -170,7 +172,7 @@ Switching modes retains manually opened groups and inner disclosures. It changes
 
 [process-groups.ts](process-groups.ts) groups visible Chat content; [process-activity.ts](process-activity.ts) summarizes the activity inside each group. Both follow the rules below.
 
-A group collects adjacent process content within one Turn. Step-number changes alone do not split it. All four modes use the same grouping result. A group's `closed` flag means its content segment has ended, not that its UI disclosure is collapsed.
+A group collects adjacent process content within one Turn. Step-number changes alone do not split it. All five modes use the same grouping result. A group's `closed` flag means its content segment has ended, not that its UI disclosure is collapsed.
 
 | Input | Membership and segmentation |
 |---|---|

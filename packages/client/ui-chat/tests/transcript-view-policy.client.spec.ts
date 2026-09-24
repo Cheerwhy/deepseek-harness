@@ -5,7 +5,7 @@ import type { ChatSettings } from '../src/chat-settings.ts'
 import { TranscriptViewPolicy } from '../src/client/transcript-view.ts'
 
 describe('TranscriptViewPolicy', () => {
-  it('defaults to Standard and publishes explicit choices before persistence settles', () => {
+  it('defaults to Classic and publishes explicit choices before persistence settles', () => {
     const host = stubConfigForm<ChatSettings>()
     const observed: string[] = []
     let current = (): string => 'unconstructed'
@@ -19,20 +19,20 @@ describe('TranscriptViewPolicy', () => {
     const policy = new TranscriptViewPolicy(scope)
     current = () => policy.mode.getSnapshot()
 
-    expect(policy.mode.getSnapshot()).toBe('standard')
+    expect(policy.mode.getSnapshot()).toBe('normal')
     policy.setMode('detailed')
     expect(policy.mode.getSnapshot()).toBe('detailed')
     expect(observed).toEqual(['transcriptView=detailed:detailed'])
     expect(host.set).toHaveBeenCalledWith('transcriptView', 'detailed')
   })
 
-  it('adopts Host state, reads normal as Standard, and ignores identical writes', () => {
+  it('adopts Host state, keeps Classic, and ignores identical writes', () => {
     const host = stubConfigForm<ChatSettings>()
     const policy = new TranscriptViewPolicy(host.scope)
 
     host.publish({ status: 'ready', value: { linkOpening: 'sidebar', transcriptView: 'normal', performanceUsage: 'detailed' }, revision: 1, writable: true })
-    expect(policy.mode.getSnapshot()).toBe('standard')
-    policy.setMode('standard')
+    expect(policy.mode.getSnapshot()).toBe('normal')
+    policy.setMode('normal')
     expect(host.set).not.toHaveBeenCalled()
 
     host.publish({ value: { linkOpening: 'sidebar', transcriptView: 'compact', performanceUsage: 'detailed' }, revision: 2 })
@@ -46,7 +46,7 @@ describe('TranscriptViewPolicy', () => {
     expect(host.set).not.toHaveBeenCalled()
   })
 
-  it.each(['compact', 'standard', 'detailed', 'verbose'] as const)('preserves an explicit %s setting without migration writes', (mode) => {
+  it.each(['normal', 'compact', 'standard', 'detailed', 'verbose'] as const)('preserves an explicit %s setting without migration writes', (mode) => {
     const host = stubConfigForm<ChatSettings>()
     host.publish({ status: 'ready', value: { linkOpening: 'sidebar', transcriptView: mode, performanceUsage: 'detailed' }, revision: 1, writable: true })
     const policy = new TranscriptViewPolicy(host.scope)

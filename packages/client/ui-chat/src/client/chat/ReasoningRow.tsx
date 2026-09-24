@@ -13,6 +13,12 @@ function firstLine(text: string): string {
   return newline === -1 ? text : text.slice(0, newline)
 }
 
+function latestLine(text: string): string {
+  const visible = text.trimEnd()
+  const newline = visible.lastIndexOf('\n')
+  return newline === -1 ? visible : visible.slice(newline + 1)
+}
+
 function latestCompletedParagraphFirstLine(text: string): string {
   let summary = ''
   let paragraphStart = 0
@@ -34,9 +40,9 @@ function latestCompletedParagraphFirstLine(text: string): string {
 /**
  * Render one assistant reasoning block collapsed until the reader opens it. The
  * collapsed summary omits double-asterisk markers; expanded content renders
- * the complete Markdown with secondary typography. A streaming preview advances
- * when a paragraph's first line completes. Mode changes toggle CSS display without unmounting
- * collapsed summaries.
+ * the complete Markdown with secondary typography. Classic previews the current
+ * streaming line; other modes advance when a paragraph's first line completes.
+ * Mode changes toggle CSS display without unmounting collapsed summaries.
  * @param props.text - complete or streaming reasoning text.
  * @param props.running - whether this block is the streaming tail.
  * @param props.usePresentation - live display-policy selector for this reasoning row.
@@ -53,18 +59,22 @@ export const ReasoningRow = memo(function ReasoningRow({ text, running, usePrese
 }) {
   const { expanded, toggle } = useDisclosure()
   const labels = useMemo(() => markdownLabels(t), [t])
-  const summaryText = running ? latestCompletedParagraphFirstLine(text) : firstLine(text)
+  const liveReasoningLatestLine = usePresentation(policy => policy.liveReasoningLatestLine)
+  const summaryText = running
+    ? liveReasoningLatestLine ? latestLine(text) : latestCompletedParagraphFirstLine(text)
+    : firstLine(text)
   const summary = useMemo(() => summaryText.replaceAll('**', ''), [summaryText])
   const preview = usePresentation(policy => !expanded && summary !== ''
     && (running || policy.settledReasoningPreview))
   const collapsedContent = useMemo(() => (
     <>
       <span className={css.separator} aria-hidden />
-      <span className={css.summary} data-streaming={running || undefined}>
+      <span className={css.summary} data-streaming={running || undefined}
+        data-follow-end={running && liveReasoningLatestLine || undefined}>
         <span className={css.summaryText}>{summary}</span>
       </span>
     </>
-  ), [running, summary])
+  ), [liveReasoningLatestLine, running, summary])
   const content = useMemo(() => expanded ? (
     <div className={css.thinkBody}>
       <MarkdownText text={text} streaming={running} labels={labels} variant="compact" />

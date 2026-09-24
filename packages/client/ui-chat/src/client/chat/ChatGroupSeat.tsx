@@ -131,8 +131,10 @@ export const ChatGroupSeat = memo(function ChatGroupSeat({ groupKey, useChatGrou
   const turn = useChatGroup(groupKey, group => group?.data.turn)
   const closed = useChatGroup(groupKey, group => group?.data.closed)
   const foldCompleted = props.usePresentation(policy => policy.foldCompletedTurns)
+  const classicTurnFold = props.usePresentation(policy => policy.classicTurnFold)
   const { expanded: open, setExpanded: setOpen } = useDisclosure()
   const firstKey = members?.[0]?.key ?? ''
+  const firstAnchor = props.useChatNode(firstKey, node => node?.anchorSeq)
   const presentation = props.useChatNodeProcess(firstKey)
   const turnLocation = props.useChatNode(firstKey, (node) => {
     const location = node?.location
@@ -149,6 +151,9 @@ export const ChatGroupSeat = memo(function ChatGroupSeat({ groupKey, useChatGrou
   const stored = props.useStore(selectStored)
   const outerHidden = foldCompleted && presentation?.turnClosed === true && spec !== undefined
     && !alwaysOpen && stored?.answerStep !== (spec.answerStep ?? 0)
+    && (!classicTurnFold || (!props.historyIncomplete && spec.answerAnchorSeq !== null
+      && firstAnchor !== undefined && firstAnchor >= spec.processStartSeq
+      && firstAnchor < spec.answerAnchorSeq))
   const revealOuter = useCallback(() => {
     if (spec !== undefined && !alwaysOpen) props.actions.setTurnProcessOpen(spec.turn, spec.answerStep ?? 0, true)
   }, [props.actions, spec, alwaysOpen])

@@ -8,7 +8,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-Use this package to render a browser chat from recorded Session conversations, including historical images, localized actions, and restored scroll position. Work-details modes control reasoning previews and process visibility without hiding final answers; Verbose keeps completed-turn process rows visible. Local transcript and steering submissions appear immediately, remain in their original surface, and disappear atomically when authoritative Session records arrive, while queued submissions stay outside Chat. The package does not assemble or modify model requests.
+Use this package to render recorded Session conversations with historical images and restored scroll position. Work-details modes control reasoning previews and process visibility without hiding final answers; Classic folds completed-turn process rows when the final answer and full history are loaded. Local transcript and steering submissions appear immediately, remain in their original surface, and disappear atomically when authoritative Session records arrive, while queued submissions stay outside Chat. The package does not assemble or modify model requests.
 
 File-mention providers receive the viewed Session ID with the closing-turn owner, so links into inherited history can address the fork itself.
 
@@ -47,7 +47,7 @@ When an Assistant attempt retires without a visible message, Chat hides its alre
 <a id="command-and-failure-rows"></a>
 ## Command and failure rows
 
-Generic command rows retain the ordinary command glyph in every lifecycle state; failure remains explicit through the row state and summary. A terminal Turn failure remains a separate red-dot notice; intermediate model retries do not create that notice, and an output-token limit uses the amber warning dot.
+Generic command rows retain the ordinary command glyph in every lifecycle state and sweep one highlight across the row while running; failure remains explicit through the row state and summary. A terminal Turn failure remains a separate red-dot notice; intermediate model retries do not create that notice, and an output-token limit uses the amber warning dot.
 
 -----
 
@@ -78,7 +78,7 @@ During uninterrupted following, local transcript and steering echoes remain moun
 
 When Chat ends with an open Turn control and that Turn has no visible input, the first local transcript echo precedes the control. Other echoes remain at the flow tail. The control and echoes share one keyed list, so arrival of the control preserves the echo's mounted identity. Durable inputs replace their matching echoes in the same render.
 
-Work-details modes control process-group display and reasoning previews. Compact, Standard, and Detailed fold eligible completed Turns without hiding the final answer; Verbose retains the duration/status header without a collapse action and shows historical process rows directly. The [business-rule reference](src/client/conversation-nodes/README.md#display-modes) contains the mode table, title behavior, whole-Turn eligibility, clocks, and disclosure resets.
+Work details offers Classic (default), Compact, Standard, Detailed, and Verbose. Classic folds completed-Turn process rows after the final answer and full history load, with a count-based control. Compact, Standard, and Detailed fold eligible completed Turns without hiding the final answer; Verbose retains the duration/status header without a collapse action. A blue activity label follows durable conversation content and precedes pending steering echoes while a Turn runs. The [business-rule reference](src/client/conversation-nodes/README.md#display-modes) contains the mode table, title behavior, whole-Turn eligibility, clocks, and disclosure resets.
 
 -----
 

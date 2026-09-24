@@ -144,9 +144,7 @@ describe('web e2e: assistant IconActions wait for the turn to end', () => {
     // so the first step's message and tool result are already durable.
     await expect.poll(() => existsSync(marker), { timeout: 20_000 }).toBe(true)
     const runningProcess = page.locator('[data-turn-process]')
-    expect(await runningProcess.count()).toBe(1)
-    expect(await runningProcess.isDisabled()).toBe(true)
-    expect(await runningProcess.getAttribute('aria-expanded')).toBe('true')
+    expect(await runningProcess.count()).toBe(0)
     await expect.poll(
       () => page.getByRole('status').filter({ hasText: 'Deep diving...' }).isVisible(),
       { timeout: 10_000 },

@@ -16,6 +16,7 @@ interface ChatNodeSeatProps extends ChatNodeOwnerProps {
   readonly nodeStore: ChatNodeStore
   readonly useChatNode: ChatViewSlotProps['useChatNode']
   readonly useChatNodeProcess: ChatViewSlotProps['useChatNodeProcess']
+  readonly historyIncomplete: boolean
   readonly usePresentation: UsePresentation
   readonly useStore: ChatViewSlotProps['useStore']
   readonly actions: ChatViewSlotProps['actions']
@@ -43,7 +44,7 @@ function turnOf(node: ChatNode | undefined): number | undefined {
  * only seats whose visibility actually changes.
  */
 export const ChatNodeSeat = memo(function ChatNodeSeat({
-  nodeKey, groupPart, useChatNode, useChatNodeProcess, usePresentation,
+  nodeKey, groupPart, useChatNode, useChatNodeProcess, usePresentation, historyIncomplete,
   cwd, openFile, openSkill, inspectCall, forkAt,
   loadImage, renderMessageImages, fileMentions, useStore, actions, renderSlot, t,
 }: ChatNodeSeatProps) {
@@ -69,12 +70,15 @@ export const ChatNodeSeat = memo(function ChatNodeSeat({
     }
   }, [actions, processSpec, alwaysOpen])
   const foldCompleted = usePresentation(policy => policy.foldCompletedTurns)
-  // A loaded end makes a partial historical Turn eligible without its start.
+  const classicTurnFold = usePresentation(policy => policy.classicTurnFold)
+  // Current modes accept a loaded end without the start; Classic waits for full history.
   const processWindowReady = processSpec !== undefined
     && processPresentation !== undefined
     && foldCompleted
     && processPresentation.turn === processSpec.turn
     && (processPresentation.turnStarted || processPresentation.turnClosed)
+    && (!classicTurnFold || (processPresentation.turnClosed
+      && processSpec.answerAnchorSeq !== null && !historyIncomplete))
   const processMember = routedNode !== undefined
     && processWindowReady
     && !TURN_PROCESS_INDEPENDENT_KINDS.has(routedNode.kind)

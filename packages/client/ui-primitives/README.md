@@ -48,7 +48,7 @@ Check this table before writing a control in a feature package. A plugin cannot 
 | `PathLabel` | Single-line file path with subdued directories, a primary filename, and the full path on hover. Fitting paths align left; clipped paths preserve their suffix with a left-edge fade that updates on path and size changes. |
 | `StateDot` | Solid green `done`, amber `warning`, red `error`, and neutral-grey `idle` marks in a 10px slot, plus a tertiary-grey 14px rotating `ongoing` loader whose animations pin to document time zero so every visible loader rotates in phase. `aria-hidden`, so the render site owns the name. `appearance="step"` shows a filled check for completion and a hollow pending circle. |
 | `ConnectionIndicator` | Inline connection-recovery control across outage, retry, and recovered states. |
-| `DisclosureRow` | 24px compact disclosure that lays title and content side by side. Memoized with shallow prop comparison; keep callbacks and React-node props stable when their content is unchanged. |
+| `DisclosureRow` | 24px compact disclosure that lays title and content side by side. `running` sweeps one highlight across the entire row. Memoized with shallow prop comparison; keep callbacks and React-node props stable when their content is unchanged. |
 | `Modal` | Centered dialog over a page mask. A nested dialog can intercept keys with `onKeyDownCapture` before document Escape handlers. |
 | `RiskConfirmation` | Sensitive action gated behind an explicit checkbox. |
 | `OnboardingSurface` | First-run stage that holds the application root inert. |

@@ -13,42 +13,70 @@ export interface ChatPresentationPolicy {
   readonly mode: TranscriptViewMode
   /** Whether a normally completed Turn folds its process rows behind the whole-Turn control. */
   readonly foldCompletedTurns: boolean
+  /** Require a loaded final answer and complete history before folding, as in the classic display. */
+  readonly classicTurnFold: boolean
   /** Collapsible group headers for all Turns, historical Turns only, or no Turns. */
   readonly stepGrouping: 'collapsed' | 'history' | 'none'
   /** Show the running command, path, query, or reasoning detail in group titles. */
   readonly liveProcessDetail: boolean
   /** Whether a settled reasoning row previews its first line beside the Think title. */
   readonly settledReasoningPreview: boolean
+  /** Whether streaming reasoning previews the current line as it grows. */
+  readonly liveReasoningLatestLine: boolean
+  /** Label shown on a completed Turn's process control. */
+  readonly completedTurnHeader: 'counts' | 'duration' | 'none'
 }
 
 const POLICIES: Readonly<Record<TranscriptViewMode, ChatPresentationPolicy>> = {
+  normal: {
+    mode: 'normal',
+    foldCompletedTurns: true,
+    classicTurnFold: true,
+    stepGrouping: 'none',
+    liveProcessDetail: false,
+    settledReasoningPreview: true,
+    liveReasoningLatestLine: true,
+    completedTurnHeader: 'counts',
+  },
   compact: {
     mode: 'compact',
     foldCompletedTurns: true,
+    classicTurnFold: false,
     stepGrouping: 'collapsed',
     liveProcessDetail: false,
     settledReasoningPreview: false,
+    liveReasoningLatestLine: false,
+    completedTurnHeader: 'duration',
   },
   standard: {
     mode: 'standard',
     foldCompletedTurns: true,
+    classicTurnFold: false,
     stepGrouping: 'collapsed',
     liveProcessDetail: true,
     settledReasoningPreview: true,
+    liveReasoningLatestLine: false,
+    completedTurnHeader: 'duration',
   },
   detailed: {
     mode: 'detailed',
     foldCompletedTurns: true,
+    classicTurnFold: false,
     stepGrouping: 'history',
     liveProcessDetail: true,
     settledReasoningPreview: true,
+    liveReasoningLatestLine: false,
+    completedTurnHeader: 'duration',
   },
   verbose: {
     mode: 'verbose',
     foldCompletedTurns: false,
+    classicTurnFold: false,
     stepGrouping: 'none',
     liveProcessDetail: false,
     settledReasoningPreview: true,
+    liveReasoningLatestLine: false,
+    completedTurnHeader: 'duration',
   },
 }
 

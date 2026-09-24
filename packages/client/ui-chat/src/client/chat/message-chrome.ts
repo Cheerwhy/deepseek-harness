@@ -9,9 +9,6 @@ export type ClockTranslate = Translate<'clock.md' | 'clock.ymd'>
 export type RunDurationTranslate =
   Translate<'duration.seconds' | 'duration.minutes' | 'duration.hours'>
 
-/** Refresh interval for whole-second live run clocks. */
-export const LIVE_RUN_CLOCK_INTERVAL_MS = 1000
-
 function pad2(n: number): string {
   return String(n).padStart(2, '0')
 }
@@ -56,24 +53,6 @@ export function formatRunDuration(ms: number, t: RunDurationTranslate): string {
   }
   return minutes > 0
     ? t('duration.minutes', { minutes, seconds: pad2(seconds) })
-    : t('duration.seconds', { seconds })
-}
-
-/**
- * Localized live elapsed time without padded seconds or early rollover.
- * @param ms - Elapsed duration in milliseconds (negatives clamp to zero).
- * @param t - Translate seat supplying the duration templates.
- * @returns Whole seconds without a leading zero; minutes start at 60 seconds
- * and hours start at exactly 60 minutes.
- */
-export function formatLiveRunDuration(ms: number, t: RunDurationTranslate): string {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000))
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor(totalSeconds / 60) % 60
-  const seconds = String(totalSeconds % 60)
-  if (hours > 0) return t('duration.hours', { hours, minutes: pad2(minutes), seconds })
-  return minutes > 0
-    ? t('duration.minutes', { minutes, seconds })
     : t('duration.seconds', { seconds })
 }
 

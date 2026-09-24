@@ -573,6 +573,8 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
       : [{ id: 'agent-default-model', config: { provider: 'deepseek-official', model: 'deepseek-v4-flash' } }],
     ...extraOverlayPatches,
     { id: 'agent-preset-registry', config: { default: 'standard' } },
+    // Pin presentation so scenarios outside work-details coverage keep one stable transcript baseline.
+    { id: 'ui-chat', config: { transcriptView: 'standard' } },
     { id: 'session-persistence-jsonl', config: { root: persistenceRoot } },
     // Content search is enabled here although the shipped bundles default it
     // off (`openAt: never`, pinned by apps/cli/tests/lazy-search-startup):

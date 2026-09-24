@@ -20,6 +20,26 @@ const t = makeTranslate(zh, commonZh)
 const renderMessageImages: AssistantMarkdownProps['renderMessageImages'] = () => null
 
 describe('ReasoningRow', () => {
+  it('keeps Classic reasoning collapsed while updating its latest streaming line', () => {
+    const mode = createSnapshotStore<TranscriptViewMode>('normal')
+    const usePresentation = bindSnapshotSelector(derivePresentationPolicy(mode))
+    const props = { useDisclosure, usePresentation, t }
+    const view = render(<ReasoningRow {...props} text="Reading" running />)
+    const root = view.container.querySelector('[data-variant="think"]')!
+    const toggle = view.getByRole('button')
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(view.getByText('Reading').parentElement?.hasAttribute('data-follow-end')).toBe(true)
+    view.rerender(<ReasoningRow {...props} text={'Reading\nChecking'} running />)
+    expect(view.getByText('Checking')).toBeTruthy()
+    view.rerender(<ReasoningRow {...props} text={'Reading\nChecking files'} running />)
+    expect(view.getByText('Checking files')).toBeTruthy()
+    fireEvent.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    view.rerender(<ReasoningRow {...props} text={'Reading\nChecking files and paths'} running />)
+    expect(root.querySelector('[data-markdown-variant]')?.textContent).toContain('Checking files and paths')
+    expect(root.hasAttribute('data-preview')).toBe(false)
+  })
+
   it.each([
     ['', ''],
     ['An unfinished line', ''],

@@ -27,7 +27,7 @@ English | [中文](README.zh.md)
 
 Tool calls appear in the conversation as cards: a root call tree with its nested subcalls, each atomic call rendered by its owning view. Every lifecycle state retains the tool's ordinary business glyph; failure and interruption remain explicit through the frozen call/result state, accessible status text, and failure summary. Users can open files or inspect calls through the Host callbacks.
 
-Shared Tool rows and Bash rows retain error and warning colors for failed and stopped summaries, including on hover. Hover darkens only summaries without those states.
+Shared Tool rows and Bash rows sweep one highlight across the entire row while running. They retain error and warning colors for failed and stopped summaries, including on hover. Hover darkens only summaries without those states.
 
 Before dispatch, a named model call appears as one non-expandable row with its tool-owned icon and title. A generic row shows `Tool call · <tool name>`. Preparation exposes no complete arguments, file link, result, or parameter-dependent interaction. Write/edit show `Preparing content NKB` in the summary; N is `Math.ceil(raw.length / 1024)`, an integer estimate of the raw argument string length, not the file's byte size. `tool/call` enables the existing call presentation; completing an argument block alone does not start execution.
 

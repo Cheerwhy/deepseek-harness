@@ -70,8 +70,8 @@ export async function scrollIntoView(target: Locator): Promise<void> {
 
 /**
  * Expand every eligible Turn process and secondary group so a Tool-focused
- * scenario can exercise the original row contract beneath product-default
- * compact Chat presentation.
+ * scenario can exercise the original row contract beneath the scaffold's
+ * fixed Standard presentation.
  * @param page - page containing the Chat view.
  */
 export async function expandTurnProcesses(page: Page): Promise<void> {
